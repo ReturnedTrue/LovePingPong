@@ -1,0 +1,19 @@
+{
+    "Class": {
+        "prefix": "class",
+        "body": [
+            "local ${TM_FILENAME_BASE} = {}",
+            "${TM_FILENAME_BASE}.__index = ${TM_FILENAME_BASE}",
+            "",
+            "function ${TM_FILENAME_BASE}.new()",
+            "\tlocal self = setmetatable({}, ${TM_FILENAME_BASE})",
+            "",
+            "",
+            "",
+            "\treturn self",
+            "end",
+            "",
+            "return ${TM_FILENAME_BASE}"
+        ]
+    }
+}
