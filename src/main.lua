@@ -3,12 +3,15 @@ local Object = require("classes/Object")
 local Player = require("classes/Player")
 
 local WINDOW_SIZE = Vector2.new(love.graphics.getDimensions())
-local PADDLE_SIZE = Vector2.new(WINDOW_SIZE.x * 0.025, WINDOW_SIZE.y * 0.1)
+local PADDLE_SIZE = Vector2.new(WINDOW_SIZE.x * 0.01, WINDOW_SIZE.y * 0.1)
+
 local LINE_WIDTH = WINDOW_SIZE.x * 0.01
+local BALL_RADIUS = WINDOW_SIZE.x * 0.025
 
 local ball = Object.new(
     Vector2.new(), 
-    Vector2.new()
+    Vector2.new(),
+    Vector2.new(BALL_RADIUS, 100)
 )
 
 local player1 = Player.new(
@@ -29,56 +32,125 @@ local player2 = Player.new(
     )
 )
 
-local keyVelocities = {
-    p1 = {
-        w = Vector2.new(0, -5),
-        s = Vector2.new(0, 5)
-    },
+local players = {player1, player2}
 
-    p2 = {
-        up = Vector2.new(0, -5),
-        down = Vector2.new(0, 5)
-    }
+local keyVelocities = {
+    w = {1, Vector2.new(0, -5)},
+    s = {1, Vector2.new(0, 5)},
+
+    up = {2, Vector2.new(0, -5)},
+    down = {2, Vector2.new(0, 5)},
 }
 
+local gameStarted = false
+
+local function spawnBall(rightSide)
+    ball.position = Vector2.new(WINDOW_SIZE.x / 2, WINDOW_SIZE.y / 2)
+
+    local newVelocity = Vector2.new(
+        math.random(2, 4),
+        math.random(1, 3)
+    )
+
+    if (rightSide) then
+        newVelocity.x = -newVelocity.x
+    end
+
+    ball.velocity = newVelocity
+end
+
+function love.load()    
+    love.window.setTitle("Ping Pong")
+
+
+    spawnBall()
+end
 
 function love.keypressed(key)
-    local p1Velocity = keyVelocities.p1[key]
-    local p2Velocity = keyVelocities.p2[key]
+    if (key == "return" and (not gameStarted)) then
+        gameStarted = true
+        return
+    end
 
-    if (p1Velocity) then
-        player1.paddle.velocity = player1.paddle.velocity + p1Velocity
-    elseif (p2Velocity) then
-        player2.paddle.velocity = player2.paddle.velocity + p2Velocity 
+    local velocityData = keyVelocities[key]
+
+    if (velocityData) then
+        local player = players[velocityData[1]]
+
+        player.paddle.velocity = player.paddle.velocity + velocityData[2]
     end
 end
 
 function love.keyreleased(key)
-    local p1Velocity = keyVelocities.p1[key]
-    local p2Velocity = keyVelocities.p2[key]
+    local velocityData = keyVelocities[key]
 
-    if (p1Velocity) then
-        player1.paddle.velocity = player1.paddle.velocity - p1Velocity
-    elseif (p2Velocity) then
-        player2.paddle.velocity = player2.paddle.velocity - p2Velocity 
+    if (velocityData) then
+        local player = players[velocityData[1]]
+
+        player.paddle.velocity = player.paddle.velocity - velocityData[2]
     end
 end
 
-function love.update()
-    local p1Next = player1.paddle:getNextPosition()
-    local p2Next = player2.paddle:getNextPosition()
+function love.update()  
+    if (not (love.window.hasFocus() or gameStarted)) then
+        return
+    end
+    
+    ball.position = ball:getNextPosition()
 
-    if (p1Next.y > 0 and WINDOW_SIZE.y > (p1Next.y + PADDLE_SIZE.y)) then
-        player1.paddle.position = p1Next
+    if (BALL_RADIUS >= ball.position.y or (BALL_RADIUS + ball.position.y) >= WINDOW_SIZE.y) then
+        ball.velocity.y = -ball.velocity.y
+    end
+    
+    for i = 1, 2 do
+        local player = players[i]
+        local nextPosition = player.paddle:getNextPosition()
+        local nextY = nextPosition.y
+
+        if (nextY > 0 and WINDOW_SIZE.y > (nextY + PADDLE_SIZE.y)) then
+            player.paddle.position = nextPosition
+        end
     end
 
-    if (p2Next.y > 0 and WINDOW_SIZE.y > (p2Next.y + PADDLE_SIZE.y)) then
-        player2.paddle.position = p2Next
+    if (player1.paddle.position.x >= (ball.position.x - BALL_RADIUS - PADDLE_SIZE.x)) then
+        local fullY = player1.paddle.position.y + PADDLE_SIZE.y
+
+        if (ball.position.y >= player1.paddle.position.y and fullY >= ball.position.y) then
+            ball:inverseXVelocity(1.1)
+        else
+            player2:addPoint()
+            spawnBall(false)
+        end
+    end
+
+    if ((ball.position.x + BALL_RADIUS) >= player2.paddle.position.x) then
+        local fullY = player2.paddle.position.y + PADDLE_SIZE.y
+
+        if (ball.position.y >= player2.paddle.position.y and fullY >= ball.position.y) then
+            ball:inverseXVelocity(1.1)
+        else 
+            player1:addPoint()
+            spawnBall(true)
+        end
     end
 end
 
 function love.draw()
-    love.graphics.rectangle("fill", player1.paddle:unload())
-    love.graphics.rectangle("fill", player2.paddle:unload())
+    if (not gameStarted) then
+        love.graphics.print("Press enter to start the game", WINDOW_SIZE.x / 2, WINDOW_SIZE.y / 2)
+        return
+    end
+
+    love.graphics.setColor(1, 1, 1)
+
+    local fps = love.timer.getFPS()
+    love.graphics.print(("%d FPS"):format(fps))
+
+    for _, player in ipairs(players) do
+        love.graphics.rectangle("fill", player.paddle:unload())
+    end
+
+    love.graphics.setColor(1, 0, 0)
+    love.graphics.circle("fill", ball:unload())
 end
 

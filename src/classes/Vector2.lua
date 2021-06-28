@@ -24,6 +24,13 @@ function Vector2:__sub(secondVector)
     )
 end
 
+function Vector2:__mul(secondVector)
+    return Vector2.new(
+        self.x * secondVector.x,
+        self.y * secondVector.y
+    )
+end
+
 function Vector2:__call()
     return self.x, self.y
 end

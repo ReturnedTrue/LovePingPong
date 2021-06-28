@@ -11,6 +11,10 @@ function Object.new(position, velocity, size)
     return self
 end
 
+function Object:inverseXVelocity(multiplier)
+    self.velocity.x = self.velocity.x * -multiplier
+end
+
 function Object:getNextPosition()
     return self.position + self.velocity
 end
