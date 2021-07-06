@@ -2,14 +2,50 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "watch",
+            "label": "test",
             "type": "shell",
-            "command": "love src",
+            "command": "bin/LOVE/love.exe src",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
                 "isDefault": true
             }
+        },
+
+        {
+            "label": "compress",
+            "type": "shell",
+            "command": [
+                "Compress-Archive -Force src/* out/files/release.zip"
+            ],
+            "problemMatcher": []
+        },
+
+        {
+            "label": "convert",
+            "type": "shell",
+            "command": [
+                "Move-Item -Force out/files/release.zip out/files/release.love",
+            ],
+            "problemMatcher": []
+        },
+
+        {
+            "label": "build",
+            "type": "shell",
+            "command": [
+                "cmd /c copy /b bin\\LOVE\\love.exe + out\\files\\release.love out\\dist\\PingPong.exe",
+            ],
+            "problemMatcher": []
+        },
+
+        {
+            "label": "package",
+            "type": "shell",
+            "command": [
+                "Compress-Archive -Force out/dist/* out/PingPong.zip"
+            ],
+            "problemMatcher": []
         }
     ]
 }

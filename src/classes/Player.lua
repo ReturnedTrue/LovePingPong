@@ -10,8 +10,4 @@ function Player.new(score, paddle)
     return self
 end
 
-function Player:addPoint()
-    self.score = self.score + 1
-end
-
 return Player
